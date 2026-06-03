@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IGLESIA CRISTIANA NUEVA VIDA</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f8;
+    margin:0;
+}
+
+/* ENCABEZADO */
+header{
+    background:#ffffff;
+    text-align:center;
+    padding:20px;
+    border-bottom:4px solid #3498db;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.logo{
+    width:150px;
+    height:auto;
+    display:block;
+    margin:0 auto 10px auto;
+}
+
+h1{
+    margin:0;
+    color:#2c3e50;
+    text-transform:uppercase;
+}
+
+/* BOTONES */
+.buttons{
+    text-align:center;
+    margin:20px;
+}
+
+button{
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    background:#3498db;
+    color:white;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:14px;
+}
+
+button:hover{
+    background:#2980b9;
+}
+
+/* FORMULARIO */
+form{
+    display:none;
+    background:white;
+    padding:15px;
+    margin:20px;
+    border-radius:10px;
+    text-align:center;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+input{
+    padding:8px;
+    margin:5px;
+    width:170px;
+}
+
+/* TABLA */
+table{
+    width:95%;
+    margin:20px auto;
+    border-collapse:collapse;
+    background:white;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+table, th, td{
+    border:1px solid #ccc;
+}
+
+th{
+    background:#3498db;
+    color:white;
+}
+
+td, th{
+    padding:10px;
+    text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <img src="image(16).png" alt="Logo Iglesia Nueva Vida" class="logo">
+    <h1>IGLESIA CRISTIANA NUEVA VIDA</h1>
+</header>
+
+<div class="buttons">
+    <button onclick="mostrarFormulario()">Añadir</button>
+    <button onclick="buscar()">Buscar</button>
+    <button onclick="actualizar()">Actualizar</button>
+    <button onclick="eliminar()">Eliminar</button>
+    <button onclick="reiniciar()">Mostrar Todo</button>
+</div>
+
+<form id="formulario">
+    <input type="number" id="numero" placeholder="N°">
+    <input type="text" id="nombre" placeholder="Nombres">
+    <input type="text" id="apellido" placeholder="Apellido">
+    <input type="text" id="area" placeholder="Área">
+    <input type="text" id="celular" placeholder="Celular">
+    <input type="date" id="fecha">
+    <br><br>
+    <button type="button" onclick="agregar()">Guardar</button>
+</form>
+
+<table id="tabla">
+    <thead>
+        <tr>
+            <th>N°</th>
+            <th>Nombres</th>
+            <th>Apellido</th>
+            <th>Área</th>
+            <th>Celular</th>
+            <th>Fecha</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+
+let datos = [];
+
+function normalizar(texto){
+    return texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[.,-]/g, "");
+}
+
+function mostrarFormulario(){
+    document.getElementById("formulario").style.display = "block";
+}
+
+function agregar(){
+
+    let n = document.getElementById("numero").value;
+    let nom = document.getElementById("nombre").value;
+    let ape = document.getElementById("apellido").value;
+    let areaVal = document.getElementById("area").value;
+    let cel = document.getElementById("celular").value;
+    let fecha = document.getElementById("fecha").value;
+
+    if(!n || !nom){
+        alert("Ingrese al menos N° y Nombre.");
+        return;
+    }
+
+    datos.push({
+        n,
+        nom,
+        ape,
+        area: areaVal,
+        cel,
+        fecha
+    });
+
+    mostrarTabla(datos);
+    limpiar();
+
+    alert("Registro guardado correctamente ✅");
+}
+
+function mostrarTabla(data){
+
+    let tbody = document.querySelector("#tabla tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(d => {
+
+        tbody.innerHTML += `
+        <tr>
+            <td>${d.n}</td>
+            <td>${d.nom}</td>
+            <td>${d.ape}</td>
+            <td>${d.area}</td>
+            <td>${d.cel}</td>
+            <td>${d.fecha}</td>
+        </tr>
+        `;
+    });
+}
+
+function limpiar(){
+
+    document.getElementById("numero").value = "";
+    document.getElementById("nombre").value = "";
+    document.getElementById("apellido").value = "";
+    document.getElementById("area").value = "";
+    document.getElementById("celular").value = "";
+    document.getElementById("fecha").value = "";
+}
+
+function buscar(){
+
+    let valor = prompt("Ingrese dato a buscar:");
+
+    if(!valor) return;
+
+    let valorNormalizado = normalizar(valor);
+
+    let filtrados = datos.filter(d => {
+
+        let texto = Object.values(d).join(" ");
+
+        return normalizar(texto)
+            .includes(valorNormalizado);
+
+    });
+
+    mostrarTabla(filtrados);
+
+    let filas = document.querySelectorAll("#tabla tbody tr");
+
+    filas.forEach(f => {
+        f.style.background = "#b3e5fc";
+    });
+
+    if(filtrados.length === 0){
+        alert("No se encontraron resultados ❌");
+    }
+}
+
+function reiniciar(){
+    mostrarTabla(datos);
+}
+
+function actualizar(){
+
+    let num = prompt("Ingrese N° a actualizar:");
+
+    let dato = datos.find(d => d.n == num);
+
+    if(dato){
+
+        dato.nom = prompt("Nuevo nombre:", dato.nom);
+        dato.ape = prompt("Nuevo apellido:", dato.ape);
+        dato.area = prompt("Nueva área:", dato.area);
+        dato.cel = prompt("Nuevo celular:", dato.cel);
+        dato.fecha = prompt("Nueva fecha:", dato.fecha);
+
+        mostrarTabla(datos);
+
+        alert("Registro actualizado ✅");
+
+    }else{
+        alert("Registro no encontrado ❌");
+    }
+}
+
+function eliminar(){
+
+    let num = prompt("Ingrese N° a eliminar:");
+
+    let cantidadAnterior = datos.length;
+
+    datos = datos.filter(d => d.n != num);
+
+    mostrarTabla(datos);
+
+    if(datos.length < cantidadAnterior){
+        alert("Registro eliminado ✅");
+    }else{
+        alert("Registro no encontrado ❌");
+    }
+}
+
+</script>
+
+</body>
+</html>
