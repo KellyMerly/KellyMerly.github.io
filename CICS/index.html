@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TEAM SYSTEMATIC</title>
+<style>
+:root{
+--azul:#1E3A8A;--azul2:#3B82F6;--gris:#EEF2F6;--verde:#0BA84B;--blanco:#fff;
+}
+*{box-sizing:border-box;font-family:Segoe UI,Arial,sans-serif}
+body{margin:0;background:var(--gris)}
+#login{display:flex;justify-content:center;align-items:center;height:100vh}
+.card{width:430px;background:#fff;padding:28px;border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,.15)}
+.card img{display:block;margin:auto;width:170px}
+.card h2{text-align:center;color:#2b4368}
+label{font-weight:600}
+input,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;margin:6px 0 12px}
+#btnLogin{width:100%;padding:12px;background:var(--verde);color:#fff;border:none;border-radius:8px;font-size:16px}
+#error{display:none;color:red;text-align:center}
+#app{display:none}
+.sidebar{position:fixed;left:0;top:0;width:240px;height:100%;background:var(--azul);padding:20px;color:#fff}
+.sidebar img{width:150px;background:#fff;border-radius:8px;padding:8px;display:block;margin:auto}
+.sidebar h3{text-align:center}
+.sidebar button{width:100%;padding:12px;margin:8px 0;border:none;border-radius:8px}
+.main{margin-left:260px;padding:20px}
+.panel{display:none}
+.panel.active{display:block}
+.toolbar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+.toolbar button{padding:10px 16px;border:none;border-radius:8px;color:#fff}
+.buscar{background:#17a2b8}.mostrar{background:#6c757d}.ag{background:#28a745}.ac{background:#ffc107;color:#000}.el{background:#dc3545}
+.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;background:#fff;padding:15px;border-radius:10px;margin-bottom:15px}
+.full{grid-column:1/3}
+.tablewrap{overflow:auto;background:#fff;border-radius:10px}
+table{border-collapse:collapse;min-width:1200px;width:100%}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:var(--azul);color:#fff;position:sticky;top:0}
+tr:hover{background:#eef;cursor:pointer}
+.total{font-weight:bold;text-align:right;padding:10px}
+</style>
+</head>
+<body>
+<div id="login">
+<div class="card">
+<img src="logo.png">
+<h2>TEAM SYSTEMATIC</h2>
+<label>Usuario</label>
+<input id="u">
+<label>Contraseña</label>
+<input id="p" type="password">
+<button id="btnLogin" onclick="login()">Iniciar sesión</button>
+<p id="error">Usuario o contraseña incorrectos</p>
+</div>
+</div>
+
+<div id="app">
+<div class="sidebar">
+<img src="logo.png">
+<h3>TEAM SYSTEMATIC</h3>
+<button onclick="mostrar('consulta')">Consulta de TRX</button>
+<button onclick="mostrar('gestion')">Gestión de TRX</button>
+<button onclick="location.reload()">Cerrar Sesión</button>
+</div>
+
+<div class="main">
+<div id="consulta" class="panel active">
+<h2>Consulta de TRX</h2>
+<div class="toolbar">
+<input id="txtBuscar" placeholder="Buscar TRX o descripción">
+<button class="buscar" onclick="buscar()">
+Buscar
+</button>
+<button class="mostrar" onclick="mostrarTodo()">
+Mostrar Todo
+</button>
+</div>
+</div>
+
+<div id="gestion" class="panel">
+<h2>Gestión de TRX</h2>
+<div class="formgrid">
+<input id="id" placeholder="ID" readonly>
+<input id="trx" placeholder="TRX">
+<input placeholder="Descripción" id="des">
+<input placeholder="Tipo" id="tipo">
+<input placeholder="Aplicativo" id="applic">
+<input placeholder="Probar" id="probar">
+<input placeholder="Consulta/Mantenimiento" id="cm">
+<input placeholder="Perfiles" id="perf">
+<textarea id="com" class="full" placeholder="Comentarios"></textarea>
+</div>
+<div class="toolbar">
+<button class="ag" onclick="agregar()">Añadir</button>
+<button class="ac" onclick="actualizar()">Actualizar</button>
+<button class="el" onclick="eliminarRegistro()">Eliminar</button>
+</div>
+</div>
+
+<div class="tablewrap">
+<table>
+<thead>
+<tr><th>ID</th><th>TRX</th><th>DESCRIPCIÓN</th><th>TIPO</th><th>APLICATIVO</th><th>PROBAR</th><th>CONSULTA/MANTENIMIENTO</th><th>PERFILES</th><th>COMENTARIOS</th></tr>
+</thead>
+<tbody id="tabla">
+
+</tbody>
+
+</table>
+</div>
+<div class="total">
+Total de registros:
+<span id="total">0</span>
+</div>
+</div>
+</div>
+
+<script>
+const URL="https://script.google.com/macros/s/AKfycbw9987fDNC6L9sDJi88s-4x4-30uPUjHqt-LmSd10uLkV7LAhFlkr7JO3tJ1lls8c6H/exec";
+async function login(){const respuesta=await fetch(URL,{method:"POST",body:JSON.stringify({accion:"login",usuario:u.value,password:p.value})});const data=await respuesta.json();if(data.success){document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";mostrarTodo();}else{document.getElementById("error").innerHTML=data.mensaje;document.getElementById("error").style.display="block";}}
+async function mostrarTodo(){const respuesta = await fetch(URL,{
+
+        method:"POST",
+
+        body:JSON.stringify({
+
+            accion:"listar"
+
+        })
+
+    });
+
+    const datos = await respuesta.json();
+
+    cargarTabla(datos);
+}
+function cargarTabla(datos){
+
+    let html="";
+
+    for(let i=1;i<datos.length;i++){
+
+        html+=`
+
+        <tr onclick="cargarFila(
+
+        '${datos[i][0]}',
+
+        '${datos[i][1]}',
+
+        '${datos[i][2]}',
+
+        '${datos[i][3]}',
+
+        '${datos[i][4]}',
+
+        '${datos[i][5]}',
+
+        '${datos[i][6]}',
+
+        '${datos[i][7]}',
+
+        '${datos[i][8]}'
+
+        )">
+
+        <td>${datos[i][0]}</td>
+
+        <td>${datos[i][1]}</td>
+
+        <td>${datos[i][2]}</td>
+
+        <td>${datos[i][3]}</td>
+
+        <td>${datos[i][4]}</td>
+
+        <td>${datos[i][5]}</td>
+
+        <td>${datos[i][6]}</td>
+
+        <td>${datos[i][7]}</td>
+
+        <td>${datos[i][8]}</td>
+
+        </tr>
+
+        `;
+
+    }
+
+    document.getElementById("tabla").innerHTML = html;
+
+    document.getElementById("total").innerHTML = datos.length-1;
+
+}
+function mostrar(id){document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");}
+function cargarFila(a,b,c,d,e,f,g,h,i){mostrar("gestion");id.value=a;trx.value=b;des.value=c;tipo.value=d;applic.value=e;probar.value=f;cm.value=g;perf.value=h;com.value=i;}
+async function buscar(){
+
+    const texto=document.getElementById("txtBuscar").value;
+
+    const respuesta=await fetch(URL,{
+
+        method:"POST",
+
+        body:JSON.stringify({
+
+            accion:"buscar",
+
+            texto:texto
+
+        })
+
+    });
+
+    const datos=await respuesta.json();
+
+    cargarTabla(datos);
+
+}
+
+
+//================ CRUD =================
+
+async function agregar(){
+
+ id.value="";
+
+ const respuesta=await fetch(URL,{
+  method:"POST",
+  body:JSON.stringify({
+   accion:"agregar",
+   trx:trx.value,
+   descripcion:des.value,
+   tipo:tipo.value,
+   aplicativo:applic.value,
+   probar:probar.value,
+   consulta:cm.value,
+   perfiles:perf.value,
+   comentarios:com.value
+  })
+ });
+
+ const data=await respuesta.json();
+ alert(data.mensaje);
+ limpiarFormulario();
+ mostrarTodo();
+}
+
+async function actualizar(){
+
+ if(id.value==""){
+ alert("Seleccione un registro.");
+ return;
+ }
+
+
+ const respuesta=await fetch(URL,{
+  method:"POST",
+  body:JSON.stringify({
+   accion:"actualizar",
+   id:id.value,
+   trx:trx.value,
+   descripcion:des.value,
+   tipo:tipo.value,
+   aplicativo:applic.value,
+   probar:probar.value,
+   consulta:cm.value,
+   perfiles:perf.value,
+   comentarios:com.value
+  })
+ });
+
+ const data=await respuesta.json();
+ alert(data.mensaje);
+ limpiarFormulario();
+ mostrarTodo();
+}
+
+async function eliminarRegistro(){
+
+ if(id.value==""){
+ alert("Seleccione un registro.");
+ return;
+ }
+
+
+ if(!confirm("¿Desea eliminar este registro?")) return;
+
+ const respuesta=await fetch(URL,{
+  method:"POST",
+  body:JSON.stringify({
+   accion:"eliminar",
+   id:id.value
+  })
+ });
+
+ const data=await respuesta.json();
+ alert(data.mensaje);
+ limpiarFormulario();
+ mostrarTodo();
+}
+function limpiarFormulario(){
+
+    id.value="";
+
+    trx.value="";
+
+    des.value="";
+
+    tipo.value="";
+
+    applic.value="";
+
+    probar.value="";
+
+    cm.value="";
+
+    perf.value="";
+
+    com.value="";
+
+ mostrar("consulta");
+
+}
+</script>
+</body>
+</html>
